@@ -8,6 +8,8 @@ from io import BytesIO
 import base64
 import random
 
+latest_data = {"temp": 0, "hum": 0, "ldr": 0}
+
 # http://localhost:8501
 # streamlit run /Users/veronica/PycharmProjects/WeatherStation/main.py
 # ----------------- Konfiguracja strony -----------------
@@ -15,7 +17,7 @@ st.set_page_config(page_title="Stacja pogodowa", layout="centered")
 st.title("🌤️ Domowa stacja pogodowa")
 
 # ----------------- Auto-odświeżenie co 1s -----------------
-st_autorefresh(interval=1000, key="auto-refresh")
+count = st_autorefresh(interval=1000, key="auto-refresh", limit=None)
 
 # ----------------- Stan aplikacji -----------------
 if "temp" not in st.session_state:
@@ -92,11 +94,13 @@ def on_connect(client, userdata, flags, rc):
         for topic, qos in topics:
             client.subscribe((topic, qos))
             print(f"Subskrybowano temat: {topic}")
-        st.session_state.mqtt_connected = True
+        #st.session_state.mqtt_connected = True
+        latest_data["connected"] = True
     else:
         error_msg = mqtt_error_codes.get(rc, f"Nieznany kod błędu: {rc}")
         print(f"❌ Błąd połączenia MQTT: {error_msg}")
-        st.session_state.mqtt_connected = False
+        #st.session_state.mqtt_connected = False
+        latest_data["connected"] = False
 
 def on_message(client, userdata, msg):
     try:
@@ -106,17 +110,20 @@ def on_message(client, userdata, msg):
         write_api = client_db.write_api()
 
         if msg.topic == "KBDProjektTemp":
-            st.session_state.temp = payload
+            #st.session_state.temp = payload
+            latest_data["temp"] = payload
             point = Point("temperature").field("value", float(payload)).time(time.time_ns(), WritePrecision.NS)
             write_api.write(bucket=bucket, org=org, record=point)
 
         elif msg.topic == "KBDProjektHum":
-            st.session_state.hum = payload
+            #st.session_state.hum = payload
+            latest_data["hum"] = payload
             point = Point("humidity").field("value", float(payload)).time(time.time_ns(), WritePrecision.NS)
             write_api.write(bucket=bucket, org=org, record=point)
 
         elif msg.topic == "KBDProjektLDR":
-            st.session_state.ldr = payload
+            #st.session_state.ldr = payload
+            latest_data["ldr"] = payload
             point = Point("light").field("value", float(payload)).time(time.time_ns(), WritePrecision.NS)
             write_api.write(bucket=bucket, org=org, record=point)
 
@@ -139,6 +146,11 @@ def connect_mqtt():
 if "mqtt_client" not in st.session_state:
     st.session_state.mqtt_client = connect_mqtt()
 
+if count % 10 == 0:  # co 10 sekund
+    if not st.session_state.get("mqtt_connected", False):
+        print("🔄 Ponawiam połączenie z MQTT...")
+        st.session_state.mqtt_client = connect_mqtt()
+
 # ----------------- Tymczasowe dane testowe -----------------
 if st.session_state.temp == "0":
     st.session_state.temp = 0
@@ -150,9 +162,12 @@ col1, col2, col3 = st.columns(3)
 
 # ----------------- Pobranie danych -----------------
 try:
-    temp = float(st.session_state.temp)
-    hum = float(st.session_state.hum)
-    ldr = float(st.session_state.ldr)
+    temp = float(latest_data["temp"])
+    hum = float(latest_data["hum"])
+    ldr = float(latest_data["ldr"])
+    #temp = float(st.session_state.temp)
+    #hum = float(st.session_state.hum)
+    #ldr = float(st.session_state.ldr)
 except ValueError:
     temp, hum, ldr = 0.0, 0.0, 0.0
 
@@ -182,7 +197,8 @@ with col3:
 
 # ----------------- Status połączenia -----------------
 st.sidebar.markdown("### Status systemu")
-if st.session_state.mqtt_connected:
+mqtt_ok = latest_data.get("connected", False)
+if mqtt_ok:
     st.sidebar.success("✅ Połączono z MQTT")
 else:
     st.sidebar.error("❌ Brak połączenia z MQTT")
