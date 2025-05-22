@@ -1,0 +1,16 @@
+body {
+    padding: 50px;
+}
+
+h1, h2 {
+    font-family: "Shadows Into Light Two", cursive;
+    font-weight: 400;
+    font-style: normal;
+}
+
+div {
+    float: left;
+    padding: 10px;
+    margin-right: 10px;
+    text-align: center;
+}
