@@ -15,11 +15,11 @@ latest_data = {"temp": 0, "hum": 0, "ldr": 0}
 
 # InfluxDB config
 url = "http://localhost:8086"
-token = "LXvm5kID0pfEWrOTcrQ4c8Iu0QhAAxW6DBhiCCCR53zmqRZWFGewmbvP5uXWEy-lM7k72qEPJnk_vBe53PTc4g=="
-org = "WeatherStation"
+token = "y73z50WE8DbXTN7iE_8V0BxsnU5EVguxG4h0hmh9LbGXp5W-szdF6KoflTCXr4_MAdmZzmbzP7Tofos1dCyb9A=="
+org = "PK"
 bucket = "WeatherStation"
 client_db = InfluxDBClient(url=url, token=token, org=org)
-
+write_api = client_db.write_api()
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -34,7 +34,7 @@ def on_message(client, userdata, msg):
     payload = msg.payload.decode()
     print(f"Odebrano: {msg.topic} -> {payload}")
 
-    write_api = client_db.write_api()
+
     now = time.time_ns()
 
     if msg.topic == "KBDProjektTemp":
@@ -47,9 +47,20 @@ def on_message(client, userdata, msg):
         latest_data["ldr"] = float(payload)
         point = Point("light").field("value", float(payload)).time(now, WritePrecision.NS)
 
-    write_api.write(bucket=bucket, org=org, record=point)
 
-
+def periodic_write():
+    # Poczekaj minutę przed pierwszym zapisem
+    time.sleep(60)
+    while True:
+        now = time.time_ns()
+        print("🕒 Zapis danych do InfluxDB")
+        points = [
+            Point("temperature").field("value", latest_data["temp"]).time(now, WritePrecision.NS),
+            Point("humidity").field("value", latest_data["hum"]).time(now, WritePrecision.NS),
+            Point("light").field("value", latest_data["ldr"]).time(now, WritePrecision.NS)
+        ]
+        write_api.write(bucket=bucket, org=org, record=points)
+        time.sleep(1800)  # kolejne zapisy co 30 minut
 def start_mqtt():
     def _run():
         client = mqtt_client.Client(client_id)
@@ -59,3 +70,4 @@ def start_mqtt():
         client.loop_forever()
 
     threading.Thread(target=_run, daemon=True).start()
+    threading.Thread(target=periodic_write, daemon=True).start()
