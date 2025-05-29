@@ -19,6 +19,7 @@ token = "LXvm5kID0pfEWrOTcrQ4c8Iu0QhAAxW6DBhiCCCR53zmqRZWFGewmbvP5uXWEy-lM7k72qE
 org = "WeatherStation"
 bucket = "WeatherStation"
 client_db = InfluxDBClient(url=url, token=token, org=org)
+write_api = client_db.write_api()
 
 
 def on_connect(client, userdata, flags, rc):
@@ -34,7 +35,7 @@ def on_message(client, userdata, msg):
     payload = msg.payload.decode()
     print(f"Odebrano: {msg.topic} -> {payload}")
 
-    write_api = client_db.write_api()
+    #write_api = client_db.write_api()
     now = time.time_ns()
 
     if msg.topic == "KBDProjektTemp":
