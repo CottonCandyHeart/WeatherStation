@@ -13,11 +13,11 @@ topics = [("KBDProjektTemp", 0), ("KBDProjektHum", 0), ("KBDProjektLDR", 0)]
 client_id = f'weather-station'
 
 # Dane współdzielone
-latest_data = {"temp": 0, "hum": 0, "ldr": 0}
+latest_data = {"temp": 0.0, "hum": 0.0, "ldr": 0.0}
 
 # InfluxDB config
 url = "http://localhost:8086"
-token = "LXvm5kID0pfEWrOTcrQ4c8Iu0QhAAxW6DBhiCCCR53zmqRZWFGewmbvP5uXWEy-lM7k72qEPJnk_vBe53PTc4g=="
+token = "JBkshXdjDlrl4Tgkn97eBpKSOZHHuXH-tMhDccnnNzM12Soj_8z9t6lYNztob1YpRan4OwrwQ_2SBzaNmys_rg=="
 org = "WeatherStation"
 bucket = "WeatherStation"
 client_db = InfluxDBClient(url=url, token=token, org=org)
@@ -51,7 +51,7 @@ def on_message(client, userdata, msg):
 
 
 def periodic_write():
-    # Poczekaj minutę przed pierwszym zapisem
+    # Czeka minutę przed pierwszym zapisem
     time.sleep(60)
     while True:
         now = time.time_ns()
@@ -62,7 +62,7 @@ def periodic_write():
             Point("light").field("value", latest_data["ldr"]).time(now, WritePrecision.NS)
         ]
         write_api.write(bucket=bucket, org=org, record=points)
-        time.sleep(1800)  # kolejne zapisy co 30 minut
+        time.sleep(1)  # kolejne zapisy co 30 minut
 
 def get_daily_averages():
     query = f'''
@@ -80,7 +80,7 @@ def get_daily_averages():
     for table in result:
         for record in table.records:
             m = record.get_measurement()  # "temperature", "humidity", "light"
-            date = record.get_time().date().isoformat()  # np. "2024-05-29"
+            date = record.get_time().date().isoformat()  # date
             value = record.get_value()
 
             if value is None:
