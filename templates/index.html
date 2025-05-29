@@ -8,52 +8,25 @@
 </style>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script>
-        async function fetchData() {
-            const response = await fetch("/data");
-            const data = await response.json();
+    async function fetchData() {
+        const response = await fetch("/data");
+        const data = await response.json();
 
-            document.getElementById("logo").src = "/static/img/rainbow.png"
+        document.getElementById("temp").innerText = data.temp + " °C";
+        document.getElementById("hum").innerText = data.hum + " %";
+        document.getElementById("ldr").innerText = data.ldr + " lx";
 
-            document.getElementById("temp").innerText = data.temp + " °C";
-            document.getElementById("hum").innerText = data.hum + " %";
-            document.getElementById("ldr").innerText = data.ldr + " lx";
+        document.getElementById("temp-icon").src = data.temp < 20 ? "/static/img/temp/cold-btl.png" : "/static/img/temp/hot-btl.png";
+        document.getElementById("hum-icon").src = data.hum < 40 ? "/static/img/hum/low.png" : (data.hum < 80 ? "/static/img/hum/normal.png" : "/static/img/hum/high.png");
+        document.getElementById("ldr-icon").src = data.ldr < 300 ? "/static/img/ldr/low.png" : (data.ldr < 700 ? "/static/img/ldr/medium.png" : "/static/img/ldr/high.png");
+    }
 
-            //  Ikony można zaktualizować tutaj według progów
-            document.getElementById("temp-icon").src = data.temp < 20 ? "/static/img/temp/cold-btl.png" : "/static/img/temp/hot-btl.png";
-            document.getElementById("hum-icon").src = data.hum < 40 ? "/static/img/hum/low.png" : (data.hum < 80 ? "/static/img/hum/normal.png" : "/static/img/hum/high.png");
-            document.getElementById("ldr-icon").src = data.ldr < 300 ? "/static/img/ldr/low.png" : (data.ldr < 700 ? "/static/img/ldr/medium.png" : "/static/img/ldr/high.png");
-        }
-
-        setInterval(fetchData, 1000);
-        //window.onload = fetchData;
-    </script>
-</head>
-<body>
-    <h1><img id="logo" height="30"> Domowa stacja pogodowa</h1>
-    <div class="values">
-        <h2>🌡️ Temperatura: <span id="temp"></span></h2>
-        <img id="temp-icon" height="100">
-    </div>
-    <div class="values">
-        <h2>💧 Wilgotność: <span id="hum"></span></h2>
-        <img id="hum-icon" height="100">
-    </div>
-    <div class="values">
-        <h2>🔆 Naświetlenie: <span id="ldr"></span></h2>
-        <img id="ldr-icon" height="100">
-    </div>
-
-
-    <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
-
-    <h3>📅 Średnie z ostatnich 7 dni</h3>
-    <div id="history"></div>
-
-    <script>
-        async function loadHistory() {
+    async function loadHistory() {
             const response = await fetch("/history");
             const data = await response.json();
             const container = document.getElementById("history");
+
+            container.innerHTML = "";
 
             for (const [date, values] of Object.entries(data)) {
                 const day = document.createElement("div");
@@ -67,12 +40,35 @@
             }
         }
 
-        window.onload = () => {
-            fetchData();
-            loadHistory();
-        };
 
-        setInterval(fetchData, 1000);
+    setInterval(fetchData, 1000);
+    setInterval(loadHistory, 1000);
+    window.onload = () => {
+        fetchData();
+        loadHistory();
+    };
     </script>
+</head>
+<body>
+    <h1>🌤️ Domowa stacja pogodowa</h1>
+    <div>
+        <h2>🌡️ Temperatura: <span id="temp"></span></h2>
+        <img id="temp-icon" height="100">
+    </div>
+    <div>
+        <h2>💧 Wilgotność: <span id="hum"></span></h2>
+        <img id="hum-icon" height="100">
+    </div>
+    <div>
+        <h2>🔆 Naświetlenie: <span id="ldr"></span></h2>
+        <img id="ldr-icon" height="100">
+    </div>
+
+    <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
+
+    <h3>📅 Średnie z ostatnich 7 dni</h3>
+    <div id="history"></div>
+
+
 </body>
 </html>
