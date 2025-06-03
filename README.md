@@ -38,7 +38,9 @@ Aplikacja webowa do monitorowania warunków atmosferycznych w czasie rzeczywisty
 - Połączenie z brokerem MQTT (domyślnie test.mosquitto.org)
 
 ### 2. Instalacja zależności
+```
 pip install flask paho-mqtt influxdb-client
+```
 ### 3. Uruchomienie
 - python main.py 
 
@@ -48,7 +50,7 @@ pip install flask paho-mqtt influxdb-client
 > Token InfluxDB został umieszczony w kodzie w celach demonstracyjnych. W projekcie produkcyjnym należy go przenieść do zmiennych środowiskowych.
 
 ### 4. Struktura projektu
-📁 projekt/ <br/>
+📁 WeatherStation/ <br/>
 ├── main.py              # Główna aplikacja Flask <br/>
 ├── mqtt_client.py       # Obsługa MQTT i zapisy do InfluxDB <br/>
 ├── templates/ <br/>
